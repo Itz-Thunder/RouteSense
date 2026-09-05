@@ -2,6 +2,7 @@ package com.example.routesense;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -15,6 +16,12 @@ public class TripSetupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trip_setup);
+
+        // Enable top-left back button navigation
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Trip Setup");
+        }
 
         dbHelper = new DatabaseHelper(this);
 
@@ -52,5 +59,14 @@ public class TripSetupActivity extends AppCompatActivity {
             Intent intent = new Intent(TripSetupActivity.this, MapActivity.class);
             startActivity(intent);
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // Returns to Dashboard
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

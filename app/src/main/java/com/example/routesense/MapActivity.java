@@ -1,11 +1,9 @@
 package com.example.routesense;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.MenuItem;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -25,89 +23,104 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // OSMDroid configuration
-        Configuration.getInstance().setUserAgentValue(getPackageName());
-        setContentView(R.layout.activity_map);
-
-        // Request permissions if needed
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        // Enable top-left back button navigation
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Route Comparison");
         }
+
+        // CRITICAL: Initialize OSMDroid configuration and user agent to load map tiles properly
+        Configuration.getInstance().load(getApplicationContext(), getSharedPreferences("osmdroid", MODE_PRIVATE));
+        Configuration.getInstance().setUserAgentValue(getPackageName());
+
+        setContentView(R.layout.activity_map);
 
         map = findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
 
-        // Center map on demo region (e.g., Aizawl area coordinates)
-        GeoPoint startPoint = new GeoPoint(23.7271, 92.7176);
-        map.getController().setZoom(11.0);
-        map.getController().setCenter(startPoint);
+        // Define exact Start (Source) and End (Destination) coordinates
+        GeoPoint sourcePoint = new GeoPoint(23.7271, 92.7176); // Aizawl
+        GeoPoint destPoint = new GeoPoint(24.8170, 92.7932);   // Silchar
 
-        drawDemoRoutes();
-    }
+        // Center map midway between source and destination
+        GeoPoint centerPoint = new GeoPoint(
+                (sourcePoint.getLatitude() + destPoint.getLatitude()) / 2,
+                (sourcePoint.getLongitude() + destPoint.getLongitude()) / 2
+        );
+        map.getController().setZoom(9.0);
+        map.getController().setCenter(centerPoint);
 
-    private void drawDemoRoutes() {
-        // Route A (High Risk / Not Allowed) - Red Line
-        List<GeoPoint> routeAPoints = new ArrayList<>();
-        routeAPoints.add(new GeoPoint(23.7271, 92.7176));
-        routeAPoints.add(new GeoPoint(23.7500, 92.8000));
-        routeAPoints.add(new GeoPoint(23.8000, 92.9000));
+        // Evaluate routes dynamically via AI Risk Engine (18-ton heavy truck)
+        int vehicleWeight = 18;
+        RiskEngine.RouteEvaluation evalA = RiskEngine.evaluateRoute("Route A", 50, vehicleWeight, true, false);
+        RiskEngine.RouteEvaluation evalB = RiskEngine.evaluateRoute("Route B", 20, vehicleWeight, false, true);
+        RiskEngine.RouteEvaluation evalC = RiskEngine.evaluateRoute("Route C", 35, vehicleWeight, false, true);
 
-        Polyline lineA = new Polyline();
-        lineA.setPoints(routeAPoints);
-        lineA.setColor(android.graphics.Color.RED);
-        lineA.setTitle("Route A: 102 km / Risk 81 (Not Allowed)");
-        map.getOverlays().add(lineA);
+        // Draw Route A (Northern detour with hazard)
+        List<GeoPoint> pointsA = new ArrayList<>();
+        pointsA.add(sourcePoint);
+        pointsA.add(new GeoPoint(24.2000, 92.6000));
+        pointsA.add(destPoint);
+        drawRoute(pointsA, Color.RED, evalA);
 
-        // Route B (Recommended) - Green Line
-        List<GeoPoint> routeBPoints = new ArrayList<>();
-        routeBPoints.add(new GeoPoint(23.7271, 92.7176));
-        routeBPoints.add(new GeoPoint(23.6500, 92.7500));
-        routeBPoints.add(new GeoPoint(23.6000, 92.9000));
+        // Draw Route B (Direct recommended path)
+        List<GeoPoint> pointsB = new ArrayList<>();
+        pointsB.add(sourcePoint);
+        pointsB.add(new GeoPoint(24.0000, 92.8500));
+        pointsB.add(destPoint);
+        drawRoute(pointsB, Color.GREEN, evalB);
 
-        Polyline lineB = new Polyline();
-        lineB.setPoints(routeBPoints);
-        lineB.setColor(android.graphics.Color.GREEN);
-        lineB.setWidth(10f); // Make recommended route thicker
-        lineB.setTitle("Route B: 115 km / Risk 29 (Recommended)");
-        map.getOverlays().add(lineB);
+        // Draw Route C (Alternative eastern path)
+        List<GeoPoint> pointsC = new ArrayList<>();
+        pointsC.add(sourcePoint);
+        pointsC.add(new GeoPoint(24.1000, 93.1000));
+        pointsC.add(destPoint);
+        drawRoute(pointsC, Color.rgb(255, 165, 0), evalC);
 
-        // Route C (Alternative) - Orange Line
-        List<GeoPoint> routeCPoints = new ArrayList<>();
-        routeCPoints.add(new GeoPoint(23.7271, 92.7176));
-        routeCPoints.add(new GeoPoint(23.7000, 92.8200));
-        routeCPoints.add(new GeoPoint(23.6000, 92.9000));
+        // Add Source Marker
+        Marker sourceMarker = new Marker(map);
+        sourceMarker.setPosition(sourcePoint);
+        sourceMarker.setTitle("Origin: Aizawl Hub");
+        map.getOverlays().add(sourceMarker);
 
-        Polyline lineC = new Polyline();
-        lineC.setPoints(routeCPoints);
-        lineC.setColor(android.graphics.Color.YELLOW);
-        lineC.setTitle("Route C: 110 km / Risk 52 (Alternative)");
-        map.getOverlays().add(lineC);
-
-        // Add Hazard Marker
+        // Add Hazard Marker along Route A
         Marker hazardMarker = new Marker(map);
-        hazardMarker.setPosition(new GeoPoint(23.7500, 92.8000));
-        hazardMarker.setTitle("⚠️ Landslide Hazard (Severity: High)");
+        hazardMarker.setPosition(new GeoPoint(24.2000, 92.6000));
+        hazardMarker.setTitle("⚠️ Active Landslide Zone (Severity: High)");
         map.getOverlays().add(hazardMarker);
 
         // Add Destination Marker
         Marker destMarker = new Marker(map);
-        destMarker.setPosition(new GeoPoint(23.6000, 92.9000));
-        destMarker.setTitle("Destination: Silchar Hub");
+        destMarker.setPosition(destPoint);
+        destMarker.setTitle("Destination Hub: Silchar");
         map.getOverlays().add(destMarker);
 
         map.invalidate();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (map != null) map.onResume();
+    private void drawRoute(List<GeoPoint> points, int color, RiskEngine.RouteEvaluation eval) {
+        Polyline line = new Polyline();
+        line.setPoints(points);
+        line.setColor(color);
+        if (eval.isRecommended) {
+            line.setWidth(12f);
+        } else {
+            line.setWidth(6f);
+        }
+        line.setTitle(eval.routeName + " | Risk: " + eval.riskScore + " | " + eval.status);
+        map.getOverlays().add(line);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        if (map != null) map.onPause();
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // Returns to Trip Setup screen
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
+
+    @Override protected void onResume() { super.onResume(); if (map != null) map.onResume(); }
+    @Override protected void onPause() { super.onPause(); if (map != null) map.onPause(); }
 }
