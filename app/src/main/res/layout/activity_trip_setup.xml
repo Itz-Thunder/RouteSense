@@ -1,10 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".TripSetupActivity">
+    android:orientation="vertical"
+    android:padding="24dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trip Setup"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/inputSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Source (e.g. Aizawl)"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/inputDestination"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Destination (e.g. Silchar)"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/inputVehicleType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Vehicle Type (e.g. Heavy Truck)"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/inputWeight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Weight in Tons (e.g. 18)"
+        android:inputType="number"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/inputCargo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Cargo (e.g. Medical Supplies)"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/inputPriority"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Priority (e.g. High)"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnFindSafeRoute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="FIND SAFE ROUTE"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"/>
+
+</LinearLayout>
