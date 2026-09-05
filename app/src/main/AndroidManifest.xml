@@ -25,6 +25,7 @@
             android:name=".TripSetupActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".MapActivity" android:exported="false" />
     </application>
 
 </manifest>
